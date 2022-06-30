@@ -119,28 +119,17 @@ def get_driver_count():
 def get_update_for_drivers_place(place):
     """Fetches data for a specific place in the standings."""
     update = get_drivers_update()
+    driver_data = update["StandingsTable"]["StandingsLists"][0]["DriverStandings"][
+        place - 1
+    ]
     ret = {}
     ret["driver"] = (
-        update["StandingsTable"]["StandingsLists"][0]["DriverStandings"][place - 1][
-            "Driver"
-        ]["givenName"]
-        + " "
-        + update["StandingsTable"]["StandingsLists"][0]["DriverStandings"][place - 1][
-            "Driver"
-        ]["familyName"]
+        driver_data["Driver"]["givenName"] + " " + driver_data["Driver"]["familyName"]
     )
-    ret["points"] = update["StandingsTable"]["StandingsLists"][0]["DriverStandings"][
-        place - 1
-    ]["points"]
-    ret["nationality"] = update["StandingsTable"]["StandingsLists"][0][
-        "DriverStandings"
-    ][place - 1]["Driver"]["nationality"]
-    ret["team"] = update["StandingsTable"]["StandingsLists"][0]["DriverStandings"][
-        place - 1
-    ]["Constructors"][0]["name"]
-    ret["driverId"] = update["StandingsTable"]["StandingsLists"][0]["DriverStandings"][
-        place - 1
-    ]["Driver"]["driverId"]
+    ret["points"] = driver_data["points"]
+    ret["nationality"] = driver_data["Driver"]["nationality"]
+    ret["team"] = driver_data["Constructors"][0]["name"]
+    ret["driverId"] = driver_data["Driver"]["driverId"]
     ret["season"] = update["StandingsTable"]["season"]
     ret["place"] = place
 
@@ -180,19 +169,14 @@ def get_constructor_count():
 def get_update_for_constructors_place(place):
     """Fetches data for a specific place in the standings."""
     update = get_constructors_update()
+    constructor_data = update["StandingsTable"]["StandingsLists"][0][
+        "ConstructorStandings"
+    ][place - 1]
     ret = {}
-    ret["constructor"] = update["StandingsTable"]["StandingsLists"][0][
-        "ConstructorStandings"
-    ][place - 1]["Constructor"]["name"]
-    ret["points"] = update["StandingsTable"]["StandingsLists"][0][
-        "ConstructorStandings"
-    ][place - 1]["points"]
-    ret["nationality"] = update["StandingsTable"]["StandingsLists"][0][
-        "ConstructorStandings"
-    ][place - 1]["Constructor"]["nationality"]
-    ret["constructorId"] = update["StandingsTable"]["StandingsLists"][0][
-        "ConstructorStandings"
-    ][place - 1]["Constructor"]["constructorId"]
+    ret["constructor"] = constructor_data["Constructor"]["name"]
+    ret["points"] = constructor_data["points"]
+    ret["nationality"] = constructor_data["Constructor"]["nationality"]
+    ret["constructorId"] = constructor_data["Constructor"]["constructorId"]
     ret["season"] = update["StandingsTable"]["season"]
     ret["place"] = place
 
