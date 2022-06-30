@@ -111,14 +111,14 @@ class F1DriversSensor(SensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
-        stuff = f1_update.get_update_for_drivers_place(self.driver_num)
+        driver_data = f1_update.get_update_for_drivers_place(self.driver_num)
         ret = {}
-        ret["points"] = stuff["points"]
-        ret["nationality"] = stuff["nationality"]
-        ret["team"] = stuff["team"]
-        ret["driverId"] = stuff["driverId"]
-        ret["season"] = stuff["season"]
-        ret["place"] = stuff["place"]
+        ret["points"] = driver_data["points"]
+        ret["nationality"] = driver_data["nationality"]
+        ret["team"] = driver_data["team"]
+        ret["driverId"] = driver_data["driverId"]
+        ret["season"] = driver_data["season"]
+        ret["place"] = driver_data["place"]
         return ret
 
     def update(self) -> None:
@@ -126,8 +126,8 @@ class F1DriversSensor(SensorEntity):
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        stuff = f1_update.get_update_for_drivers_place(self.driver_num)
-        self._attr_native_value = stuff["driver"]
+        driver_data = f1_update.get_update_for_drivers_place(self.driver_num)
+        self._attr_native_value = driver_data["driver"]
 
 
 class F1ConstructorsSensor(SensorEntity):
@@ -153,13 +153,13 @@ class F1ConstructorsSensor(SensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
-        stuff = f1_update.get_update_for_constructors_place(self.constructor_num)
+        constructor_data = f1_update.get_update_for_constructors_place(self.constructor_num)
         ret = {}
-        ret["points"] = stuff["points"]
-        ret["nationality"] = stuff["nationality"]
-        ret["constructorId"] = stuff["constructorId"]
-        ret["season"] = stuff["season"]
-        ret["place"] = stuff["place"]
+        ret["points"] = constructor_data["points"]
+        ret["nationality"] = constructor_data["nationality"]
+        ret["constructorId"] = constructor_data["constructorId"]
+        ret["season"] = constructor_data["season"]
+        ret["place"] = constructor_data["place"]
         return ret
 
     def update(self) -> None:
@@ -167,8 +167,8 @@ class F1ConstructorsSensor(SensorEntity):
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        stuff = f1_update.get_update_for_constructors_place(self.constructor_num)
-        self._attr_native_value = stuff["constructor"]
+        constructor_data = f1_update.get_update_for_constructors_place(self.constructor_num)
+        self._attr_native_value = constructor_data["constructor"]
 
 
 class F1NextRaceNameSensor(SensorEntity):
@@ -184,8 +184,8 @@ class F1NextRaceNameSensor(SensorEntity):
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        stuff = f1_update.get_update_for_race(f1_update.get_next_race_round())
-        self._attr_native_value = stuff["raceName"]
+        race_data = f1_update.get_update_for_race(f1_update.get_next_race_round())
+        self._attr_native_value = race_data["raceName"]
 
 
 class F1NextRaceDateSensor(SensorEntity):
@@ -201,8 +201,8 @@ class F1NextRaceDateSensor(SensorEntity):
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        stuff = f1_update.get_update_for_race(f1_update.get_next_race_round())
-        self._attr_native_value = stuff["date"] + "T" + stuff["time"]
+        race_data = f1_update.get_update_for_race(f1_update.get_next_race_round())
+        self._attr_native_value = race_data["date"] + "T" + race_data["time"]
 
 
 class F1RaceSensor(SensorEntity):
@@ -228,27 +228,27 @@ class F1RaceSensor(SensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
-        stuff = f1_update.get_update_for_race(self.race_num)
+        race_data = f1_update.get_update_for_race(self.race_num)
         ret = {}
-        ret["season"] = stuff["season"]
-        ret["round"] = stuff["round"]
-        ret["date"] = stuff["date"]
-        ret["time"] = stuff["time"]
-        ret["fp1_date"] = stuff["fp1_date"]
-        ret["fp1_time"] = stuff["fp1_time"]
-        ret["fp2_date"] = stuff["fp2_date"]
-        ret["fp2_time"] = stuff["fp2_time"]
+        ret["season"] = race_data["season"]
+        ret["round"] = race_data["round"]
+        ret["date"] = race_data["date"]
+        ret["time"] = race_data["time"]
+        ret["fp1_date"] = race_data["fp1_date"]
+        ret["fp1_time"] = race_data["fp1_time"]
+        ret["fp2_date"] = race_data["fp2_date"]
+        ret["fp2_time"] = race_data["fp2_time"]
 
-        if "fp3_date" in stuff:
-            ret["fp3_date"] = stuff["fp3_date"]
-            ret["fp3_time"] = stuff["fp3_time"]
+        if "fp3_date" in race_data:
+            ret["fp3_date"] = race_data["fp3_date"]
+            ret["fp3_time"] = race_data["fp3_time"]
 
-        ret["qual_date"] = stuff["qual_date"]
-        ret["qual_time"] = stuff["qual_time"]
+        ret["qual_date"] = race_data["qual_date"]
+        ret["qual_time"] = race_data["qual_time"]
 
-        if "sprint_date" in stuff:
-            ret["sprint_date"] = stuff["sprint_date"]
-            ret["sprint_time"] = stuff["sprint_time"]
+        if "sprint_date" in race_data:
+            ret["sprint_date"] = race_data["sprint_date"]
+            ret["sprint_time"] = race_data["sprint_time"]
 
         return ret
 
@@ -257,5 +257,5 @@ class F1RaceSensor(SensorEntity):
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        stuff = f1_update.get_update_for_race(self.race_num)
-        self._attr_native_value = stuff["raceName"]
+        race_data = f1_update.get_update_for_race(self.race_num)
+        self._attr_native_value = race_data["raceName"]
