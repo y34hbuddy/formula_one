@@ -2,10 +2,10 @@
 import datetime
 import json
 from json import JSONDecodeError
+import logging
 import os
 import requests
 import time
-import logging
 
 _LOGGER = logging.getLogger("formula_one")
 
@@ -23,14 +23,14 @@ def get_filepath(filename):
     return cwd + "/config/custom_components/formula_one/" + filename
 
 
-def download_update_once(url, filepath):
+def download_update_once(url, filename):
     """Fetches a single update."""
-    _LOGGER.info("Fetching an update of %s", filepath)
+    _LOGGER.info("Fetching an update of %s", filename)
     try:
         req = requests.get(url)
 
         cache_file = open(
-            get_filepath(filepath),
+            get_filepath(filename),
             mode="w",
             encoding="utf_8",
         )
@@ -39,11 +39,11 @@ def download_update_once(url, filepath):
 
     except BlockingIOError as error:
         _LOGGER.error(
-            "Failed to fetch/cache update of %s: %s", filepath, error.strerror
+            "Failed to fetch/cache update of %s: %s", filename, error.strerror
         )
     except OSError as error:
         _LOGGER.error(
-            "Failed to fetch/cache update of %s: %s", filepath, error.strerror
+            "Failed to fetch/cache update of %s: %s", filename, error.strerror
         )
 
 
@@ -62,12 +62,12 @@ def download_update_once_season():
     download_update_once(URL_SEASON, FILENAME_SEASON)
 
 
-def download_update_regularly(url, filepath, freq):
+def download_update_regularly(url, filename, freq):
     """Launches an async task that downloads an update from the hosted data regularly."""
-    _LOGGER.info("Updating %s every %s seconds", filepath, str(freq))
+    _LOGGER.info("Updating %s every %s seconds", filename, str(freq))
     while 1:
         time.sleep(freq)
-        download_update_once(url, filepath)
+        download_update_once(url, filename)
 
 
 def download_update_regularly_drivers(freq):
