@@ -40,12 +40,55 @@ def download_update_once(url, filepath):
         )
 
 
+def download_update_once_drivers():
+    """Fetches a single update of driver data."""
+    download_update_once(
+        "http://ergast.com/api/f1/current/driverStandings.json", "f1_drivers.json"
+    )
+
+
+def download_update_once_constructors():
+    """Fetches a single update of constructor data."""
+    download_update_once(
+        "http://ergast.com/api/f1/current/constructorStandings.json",
+        "f1_constructors.json",
+    )
+
+
+def download_update_once_season():
+    """Fetches a single update of season data."""
+    download_update_once("http://ergast.com/api/f1/current.json", "f1_season.json")
+
+
 def download_update_regularly(url, filepath, freq):
     """Launches an async task that downloads an update from the hosted data regularly."""
     _LOGGER.info("Updating %s every %s seconds", filepath, str(freq))
     while 1:
         time.sleep(freq)
         download_update_once(url, filepath)
+
+
+def download_update_regularly_drivers(freq):
+    """Launches an async task that downloads an update from the hosted driver data regularly."""
+    download_update_regularly(
+        "http://ergast.com/api/f1/current/driverStandings.json", "f1_drivers.json", freq
+    )
+
+
+def download_update_regularly_constructors(freq):
+    """Launches an async task that downloads an update from the hosted constructor data regularly."""
+    download_update_regularly(
+        "http://ergast.com/api/f1/current/constructorStandings.json",
+        "f1_constructors.json",
+        freq,
+    )
+
+
+def download_update_regularly_season(freq):
+    """Launches an async task that downloads an update from the hosted season data regularly."""
+    download_update_regularly(
+        "http://ergast.com/api/f1/current.json", "f1_season.json", freq
+    )
 
 
 def get_drivers_update():

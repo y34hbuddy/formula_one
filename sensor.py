@@ -26,50 +26,31 @@ def setup_platform(
     if "update_frequency_sec" in config.keys():
         cfg_update_frequency_sec = config["update_frequency_sec"]
 
-    f1_update.download_update_once(
-        "http://ergast.com/api/f1/current/driverStandings.json", "f1_drivers.json"
-    )
-    f1_update.download_update_once(
-        "http://ergast.com/api/f1/current/constructorStandings.json",
-        "f1_constructors.json",
-    )
-    f1_update.download_update_once(
-        "http://ergast.com/api/f1/current.json", "f1_season.json"
-    )
+    f1_update.download_update_once_drivers()
+    f1_update.download_update_once_constructors()
+    f1_update.download_update_once_season()
 
     driver_count = f1_update.get_driver_count()
     constructor_count = f1_update.get_constructor_count()
     race_count = f1_update.get_race_count()
 
     thread_drivers = threading.Thread(
-        target=f1_update.download_update_regularly,
-        args=(
-            "http://ergast.com/api/f1/current/driverStandings.json",
-            "f1_drivers.json",
-            cfg_update_frequency_sec,
-        ),
+        target=f1_update.download_update_regularly_drivers,
+        args=(cfg_update_frequency_sec,),
         daemon=True,
     )
     thread_drivers.start()
 
     thread_constructors = threading.Thread(
-        target=f1_update.download_update_regularly,
-        args=(
-            "http://ergast.com/api/f1/current/constructorStandings.json",
-            "f1_constructors.json",
-            cfg_update_frequency_sec,
-        ),
+        target=f1_update.download_update_regularly_constructors,
+        args=(cfg_update_frequency_sec,),
         daemon=True,
     )
     thread_constructors.start()
 
     thread_season = threading.Thread(
-        target=f1_update.download_update_regularly,
-        args=(
-            "http://ergast.com/api/f1/current.json",
-            "f1_season.json",
-            cfg_update_frequency_sec,
-        ),
+        target=f1_update.download_update_regularly_season,
+        args=(cfg_update_frequency_sec,),
         daemon=True,
     )
     thread_season.start()
@@ -153,7 +134,9 @@ class F1ConstructorsSensor(SensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
-        constructor_data = f1_update.get_update_for_constructors_place(self.constructor_num)
+        constructor_data = f1_update.get_update_for_constructors_place(
+            self.constructor_num
+        )
         ret = {}
         ret["points"] = constructor_data["points"]
         ret["nationality"] = constructor_data["nationality"]
@@ -167,7 +150,9 @@ class F1ConstructorsSensor(SensorEntity):
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        constructor_data = f1_update.get_update_for_constructors_place(self.constructor_num)
+        constructor_data = f1_update.get_update_for_constructors_place(
+            self.constructor_num
+        )
         self._attr_native_value = constructor_data["constructor"]
 
 
