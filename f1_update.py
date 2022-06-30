@@ -12,9 +12,9 @@ _LOGGER = logging.getLogger("formula_one")
 URL_DRIVERS = "http://ergast.com/api/f1/current/driverStandings.json"
 URL_CONSTRUCTORS = "http://ergast.com/api/f1/current/constructorStandings.json"
 URL_SEASON = "http://ergast.com/api/f1/current.json"
-FILEPATH_DRIVERS = "f1_drivers.json"
-FILEPATH_CONSTRUCTORS = "f1_constructors.json"
-FILEPATH_SEASON = "f1_season.json"
+FILENAME_DRIVERS = "f1_drivers.json"
+FILENAME_CONSTRUCTORS = "f1_constructors.json"
+FILENAME_SEASON = "f1_season.json"
 
 
 def get_filepath(filename):
@@ -49,17 +49,17 @@ def download_update_once(url, filepath):
 
 def download_update_once_drivers():
     """Fetches a single update of driver data."""
-    download_update_once(URL_DRIVERS, FILEPATH_DRIVERS)
+    download_update_once(URL_DRIVERS, FILENAME_DRIVERS)
 
 
 def download_update_once_constructors():
     """Fetches a single update of constructor data."""
-    download_update_once(URL_CONSTRUCTORS, FILEPATH_CONSTRUCTORS)
+    download_update_once(URL_CONSTRUCTORS, FILENAME_CONSTRUCTORS)
 
 
 def download_update_once_season():
     """Fetches a single update of season data."""
-    download_update_once(URL_SEASON, FILEPATH_SEASON)
+    download_update_once(URL_SEASON, FILENAME_SEASON)
 
 
 def download_update_regularly(url, filepath, freq):
@@ -72,24 +72,24 @@ def download_update_regularly(url, filepath, freq):
 
 def download_update_regularly_drivers(freq):
     """Launches an async task that downloads an update from the hosted driver data regularly."""
-    download_update_regularly(URL_DRIVERS, FILEPATH_DRIVERS, freq)
+    download_update_regularly(URL_DRIVERS, FILENAME_DRIVERS, freq)
 
 
 def download_update_regularly_constructors(freq):
     """Launches an async task that downloads an update from the hosted constructor data regularly."""
-    download_update_regularly(URL_CONSTRUCTORS, FILEPATH_CONSTRUCTORS, freq)
+    download_update_regularly(URL_CONSTRUCTORS, FILENAME_CONSTRUCTORS, freq)
 
 
 def download_update_regularly_season(freq):
     """Launches an async task that downloads an update from the hosted season data regularly."""
-    download_update_regularly(URL_SEASON, FILEPATH_SEASON, freq)
+    download_update_regularly(URL_SEASON, FILENAME_SEASON, freq)
 
 
 def get_drivers_update():
     """Fetches the update from the cache."""
     try:
         with open(
-            get_filepath(FILEPATH_DRIVERS),
+            get_filepath(FILENAME_DRIVERS),
             encoding="utf_8",
         ) as cache_file:
             lines = cache_file.read()
@@ -151,7 +151,7 @@ def get_constructors_update():
     """Fetches the update from the cache."""
     try:
         with open(
-            get_filepath(FILEPATH_CONSTRUCTORS),
+            get_filepath(FILENAME_CONSTRUCTORS),
             encoding="utf_8",
         ) as cache_file:
             lines = cache_file.read()
@@ -203,7 +203,7 @@ def get_season_update():
     """Fetches the update from the cache."""
     try:
         with open(
-            get_filepath(FILEPATH_SEASON),
+            get_filepath(FILENAME_SEASON),
             encoding="utf_8",
         ) as cache_file:
             lines = cache_file.read()
