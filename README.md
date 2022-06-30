@@ -1,6 +1,6 @@
 # Formula 1 Sensors
 
-This is an integration to pull the latest Formula 1:
+This is a Home Assistant integration to pull the latest Formula 1:
  - Season Information
  - Drivers' Championship standings
  - Constructors' Championship standings
