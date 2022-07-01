@@ -95,6 +95,7 @@ def download_update_regularly_season(freq):
 
 def get_drivers_constructors_update(drivers_or_constructors):
     """Fetches the update from the cache."""
+
     filename = (
         FILENAME_DRIVERS
         if drivers_or_constructors == UPDATE_DRIVERS
@@ -144,6 +145,7 @@ def get_driver_count():
 
 def get_update_for_drivers_place(place):
     """Fetches data for a specific place in the standings."""
+
     update = get_drivers_update()
     driver_data = update["StandingsTable"]["StandingsLists"][0]["DriverStandings"][
         place - 1
@@ -164,16 +166,19 @@ def get_update_for_drivers_place(place):
 
 def get_constructors_update():
     """Fetches the update from the cache."""
+
     return get_drivers_constructors_update(UPDATE_CONSTRUCTORS)
 
 
 def get_constructor_count():
     """Gets the total number of drivers in the source data."""
+
     return int(get_constructors_update()["total"])
 
 
 def get_update_for_constructors_place(place):
     """Fetches data for a specific place in the standings."""
+
     update = get_constructors_update()
     constructor_data = update["StandingsTable"]["StandingsLists"][0][
         "ConstructorStandings"
@@ -191,6 +196,7 @@ def get_update_for_constructors_place(place):
 
 def get_season_update():
     """Fetches the update from the cache."""
+
     try:
         with open(
             get_filepath(FILENAME_SEASON),
@@ -210,11 +216,13 @@ def get_season_update():
 
 def get_race_count():
     """Gets the total number of races in the source data."""
+
     return int(get_season_update()["total"])
 
 
 def get_next_race_round():
     """Gets the next race round."""
+
     current_date = datetime.datetime.now(datetime.timezone.utc).replace(
         tzinfo=datetime.timezone.utc
     )
@@ -234,6 +242,7 @@ def get_next_race_round():
 
 def get_update_for_race(race):
     """Fetches data for a specific race."""
+
     this_race_update = get_season_update()["RaceTable"]["Races"][race - 1]
 
     ret = {}

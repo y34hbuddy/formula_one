@@ -21,6 +21,7 @@ def setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the sensor platform."""
+
     cfg_update_frequency_sec = 300
 
     if "update_frequency_sec" in config.keys():
@@ -92,6 +93,7 @@ class F1DriversSensor(SensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
+
         driver_data = f1_update.get_update_for_drivers_place(self.driver_num)
         ret = {}
         ret["points"] = driver_data["points"]
@@ -103,10 +105,7 @@ class F1DriversSensor(SensorEntity):
         return ret
 
     def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
+        """Fetch new state data for the sensor."""
         driver_data = f1_update.get_update_for_drivers_place(self.driver_num)
         self._attr_native_value = driver_data["driver"]
 
@@ -134,6 +133,7 @@ class F1ConstructorsSensor(SensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
+
         constructor_data = f1_update.get_update_for_constructors_place(
             self.constructor_num
         )
@@ -146,10 +146,8 @@ class F1ConstructorsSensor(SensorEntity):
         return ret
 
     def update(self) -> None:
-        """Fetch new state data for the sensor.
+        """Fetch new state data for the sensor."""
 
-        This is the only method that should fetch new data for Home Assistant.
-        """
         constructor_data = f1_update.get_update_for_constructors_place(
             self.constructor_num
         )
@@ -182,10 +180,8 @@ class F1NextRaceDateSensor(SensorEntity):
     _attr_state_class = None
 
     def update(self) -> None:
-        """Fetch new state data for the sensor.
+        """Fetch new state data for the sensor."""
 
-        This is the only method that should fetch new data for Home Assistant.
-        """
         race_data = f1_update.get_update_for_race(f1_update.get_next_race_round())
         self._attr_native_value = race_data["date"] + "T" + race_data["time"]
 
@@ -213,6 +209,7 @@ class F1RaceSensor(SensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
+
         race_data = f1_update.get_update_for_race(self.race_num)
         ret = {}
         ret["season"] = race_data["season"]
@@ -238,9 +235,7 @@ class F1RaceSensor(SensorEntity):
         return ret
 
     def update(self) -> None:
-        """Fetch new state data for the sensor.
+        """Fetch new state data for the sensor."""
 
-        This is the only method that should fetch new data for Home Assistant.
-        """
         race_data = f1_update.get_update_for_race(self.race_num)
         self._attr_native_value = race_data["raceName"]
