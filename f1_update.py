@@ -16,6 +16,10 @@ FILENAME_DRIVERS = "f1_drivers.json"
 FILENAME_CONSTRUCTORS = "f1_constructors.json"
 FILENAME_SEASON = "f1_season.json"
 
+ERR_JSON_DRIVERS = '{"StandingsTable":{"season":"error","StandingsLists":[{"season":"error","round":"error","DriverStandings":[{"position":"1","positionText":"1","points":"error","wins":"error","Driver":{"driverId":"error","givenName":"error","familyName":"error","nationality":"error"},"Constructors":[{"constructorId":"error","name":"error","nationality":"error"}]}]}]}}'
+ERR_JSON_CONSTRUCTORS = '{"StandingsTable":{"season":"error","StandingsLists":[{"season":"error","round":"1","ConstructorStandings":[{"position":"1","positionText":"1","points":"0","wins":"0","Constructor":{"constructorId":"error","url":"error","name":"error","nationality":"error"}}]}]}}'
+ERR_JSON_SEASON = '{"xmlns":"http://ergast.com/mrd/1.5","series":"f1","url":"http://ergast.com/api/f1/current.json","limit":"30","offset":"0","total":"1","RaceTable":{"season":"error","Races":[{"season":"error","round":"1","url":"error","raceName":"error","Circuit":{"circuitId":"error","url":"error","circuitName":"error","Location":{"lat":"error","long":"error","locality":"error","country":"error"}},"date":"2022-03-20","time":"15:00:00Z","FirstPractice":{"date":"2022-03-18","time":"12:00:00Z"},"SecondPractice":{"date":"2022-03-18","time":"15:00:00Z"},"ThirdPractice":{"date":"2022-03-19","time":"12:00:00Z"},"Qualifying":{"date":"2022-03-19","time":"15:00:00Z"}}]}}'
+
 
 def get_filepath(filename):
     """Gets the filepath for the cache files"""
@@ -98,14 +102,10 @@ def get_drivers_update():
 
     except OSError as error:
         _LOGGER.error("Failed to read cache of F1 driver data: %s", error.strerror)
-        return json.loads(
-            '{"StandingsTable":{"season":"error","StandingsLists":[{"season":"error","round":"error","DriverStandings":[{"position":"1","positionText":"1","points":"error","wins":"error","Driver":{"driverId":"error","givenName":"error","familyName":"error","nationality":"error"},"Constructors":[{"constructorId":"error","name":"error","nationality":"error"}]}]}]}}'
-        )
+        return json.loads(ERR_JSON_DRIVERS)
     except JSONDecodeError as error:
         _LOGGER.error("Failed to read cache of F1 driver data: %s", error.msg)
-        return json.loads(
-            '{"StandingsTable":{"season":"error","StandingsLists":[{"season":"error","round":"error","DriverStandings":[{"position":"1","positionText":"1","points":"error","wins":"error","Driver":{"driverId":"error","givenName":"error","familyName":"error","nationality":"error"},"Constructors":[{"constructorId":"error","name":"error","nationality":"error"}]}]}]}}'
-        )
+        return json.loads(ERR_JSON_DRIVERS)
 
 
 def get_driver_count():
@@ -145,14 +145,10 @@ def get_constructors_update():
         return thejson["MRData"]
     except OSError as error:
         _LOGGER.error("Failed to read cache of F1 constructor data: %s", error.strerror)
-        return json.loads(
-            '{"StandingsTable":{"season":"error","StandingsLists":[{"season":"error","round":"1","ConstructorStandings":[{"position":"1","positionText":"1","points":"0","wins":"0","Constructor":{"constructorId":"error","url":"error","name":"error","nationality":"error"}}]}]}}'
-        )
+        return json.loads(ERR_JSON_CONSTRUCTORS)
     except JSONDecodeError as error:
         _LOGGER.error("Failed to read cache of F1 constructor data: %s", error.msg)
-        return json.loads(
-            '{"StandingsTable":{"season":"error","StandingsLists":[{"season":"error","round":"1","ConstructorStandings":[{"position":"1","positionText":"1","points":"0","wins":"0","Constructor":{"constructorId":"error","url":"error","name":"error","nationality":"error"}}]}]}}'
-        )
+        return json.loads(ERR_JSON_CONSTRUCTORS)
 
 
 def get_constructor_count():
@@ -190,14 +186,10 @@ def get_season_update():
 
     except OSError as error:
         _LOGGER.error("Failed to read cache of F1 season data: %s", error.strerror)
-        return json.loads(
-            '{"xmlns":"http://ergast.com/mrd/1.5","series":"f1","url":"http://ergast.com/api/f1/current.json","limit":"30","offset":"0","total":"1","RaceTable":{"season":"error","Races":[{"season":"error","round":"1","url":"error","raceName":"error","Circuit":{"circuitId":"error","url":"error","circuitName":"error","Location":{"lat":"error","long":"error","locality":"error","country":"error"}},"date":"2022-03-20","time":"15:00:00Z","FirstPractice":{"date":"2022-03-18","time":"12:00:00Z"},"SecondPractice":{"date":"2022-03-18","time":"15:00:00Z"},"ThirdPractice":{"date":"2022-03-19","time":"12:00:00Z"},"Qualifying":{"date":"2022-03-19","time":"15:00:00Z"}}]}}'
-        )
+        return json.loads(ERR_JSON_SEASON)
     except JSONDecodeError as error:
         _LOGGER.error("Failed to JSON-decode cache of F1 season data: %s", error.msg)
-        return json.loads(
-            '{"xmlns":"http://ergast.com/mrd/1.5","series":"f1","url":"http://ergast.com/api/f1/current.json","limit":"30","offset":"0","total":"1","RaceTable":{"season":"error","Races":[{"season":"error","round":"1","url":"error","raceName":"error","Circuit":{"circuitId":"error","url":"error","circuitName":"error","Location":{"lat":"error","long":"error","locality":"error","country":"error"}},"date":"2022-03-20","time":"15:00:00Z","FirstPractice":{"date":"2022-03-18","time":"12:00:00Z"},"SecondPractice":{"date":"2022-03-18","time":"15:00:00Z"},"ThirdPractice":{"date":"2022-03-19","time":"12:00:00Z"},"Qualifying":{"date":"2022-03-19","time":"15:00:00Z"}}]}}'
-        )
+        return json.loads(ERR_JSON_SEASON)
 
 
 def get_race_count():
