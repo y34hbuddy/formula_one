@@ -199,16 +199,16 @@ def get_race_count():
 
 def get_next_race_round():
     """Gets the next race round."""
-    current_date = datetime.datetime.now(datetime.timezone.utc)
-    current_date = current_date.replace(tzinfo=datetime.timezone.utc)
+    current_date = datetime.datetime.now(datetime.timezone.utc).replace(
+        tzinfo=datetime.timezone.utc
+    )
     races = get_season_update()["RaceTable"]["Races"]
     for race in races:
         the_time = race["time"][:-1]
         date_time_str = race["date"] + " " + the_time + " UTC"
         race_date_time = datetime.datetime.strptime(
             date_time_str, "%Y-%m-%d %H:%M:%S %Z"
-        )
-        race_date_time = race_date_time.replace(tzinfo=datetime.timezone.utc)
+        ).replace(tzinfo=datetime.timezone.utc)
 
         if race_date_time >= current_date:
             return int(race["round"])
@@ -218,8 +218,7 @@ def get_next_race_round():
 
 def get_update_for_race(race):
     """Fetches data for a specific race."""
-    update = get_season_update()
-    this_race_update = update["RaceTable"]["Races"][race - 1]
+    this_race_update = get_season_update()["RaceTable"]["Races"][race - 1]
 
     ret = {}
     ret["raceName"] = this_race_update["raceName"]
