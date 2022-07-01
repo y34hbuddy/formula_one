@@ -3,11 +3,12 @@ import datetime
 import json
 from json import JSONDecodeError
 import logging
-import os
 import requests
 import time
 
-_LOGGER = logging.getLogger("formula_one")
+DOMAIN = "formula_one"
+
+_LOGGER = logging.getLogger(DOMAIN)
 
 URL_DRIVERS = "http://ergast.com/api/f1/current/driverStandings.json"
 URL_CONSTRUCTORS = "http://ergast.com/api/f1/current/constructorStandings.json"
@@ -25,246 +26,203 @@ UPDATE_DRIVERS = "driver"
 UPDATE_CONSTRUCTORS = "constructor"
 
 
-def get_filepath(filename):
-    """Gets the filepath for the cache files"""
-    cwd = os.getcwd().removeprefix("/config")
-    return cwd + "/config/custom_components/formula_one/" + filename
+class F1Data:
+    """Holds the JSON strings for each data set"""
+
+    def __init__(self):
+        self.data = {}
+        self.data[FILENAME_DRIVERS] = ""
+        self.data[FILENAME_CONSTRUCTORS] = ""
+        self.data[FILENAME_SEASON] = ""
 
 
-def download_update_once(url, filename):
-    """Fetches a single update."""
-    _LOGGER.info("Fetching an update of %s", filename)
-    try:
+class F1DataHandler:
+    """Handles exchange with F1 data"""
+
+    def __init__(self, hass):
+        self.hass = hass
+
+    def download_update_once(self, url, filename):
+        """Fetches a single update."""
+        _LOGGER.info("Fetching an update of %s", filename)
         req = requests.get(url)
+        self.hass.data[DOMAIN].data[filename] = req.text
 
-        cache_file = open(
-            get_filepath(filename),
-            mode="w",
-            encoding="utf_8",
+    def download_update_once_drivers(self):
+        """Fetches a single update of driver data."""
+        return self.download_update_once(URL_DRIVERS, FILENAME_DRIVERS)
+
+    def download_update_once_constructors(self):
+        """Fetches a single update of constructor data."""
+        self.download_update_once(URL_CONSTRUCTORS, FILENAME_CONSTRUCTORS)
+
+    def download_update_once_season(self):
+        """Fetches a single update of season data."""
+        self.download_update_once(URL_SEASON, FILENAME_SEASON)
+
+    def download_update_regularly(self, url, filename, freq):
+        """Launches an async task that downloads an update from the hosted data regularly."""
+        _LOGGER.info("Updating %s every %s seconds", filename, str(freq))
+        while 1:
+            time.sleep(freq)
+            self.download_update_once(url, filename)
+
+    def download_update_regularly_drivers(self, freq):
+        """Launches an async task that downloads an update from the hosted driver data regularly."""
+        self.download_update_regularly(URL_DRIVERS, FILENAME_DRIVERS, freq)
+
+    def download_update_regularly_constructors(self, freq):
+        """Launches an async task that downloads an update from the hosted constructor data regularly."""
+        self.download_update_regularly(URL_CONSTRUCTORS, FILENAME_CONSTRUCTORS, freq)
+
+    def download_update_regularly_season(self, freq):
+        """Launches an async task that downloads an update from the hosted season data regularly."""
+        self.download_update_regularly(URL_SEASON, FILENAME_SEASON, freq)
+
+    def get_drivers_constructors_update(self, drivers_or_constructors):
+        """Fetches the update from the cache."""
+
+        filename = (
+            FILENAME_DRIVERS
+            if drivers_or_constructors == UPDATE_DRIVERS
+            else FILENAME_CONSTRUCTORS
         )
-        cache_file.write(req.text)
-        cache_file.close()
 
-    except BlockingIOError as error:
-        _LOGGER.error(
-            "Failed to fetch/cache update of %s: %s", filename, error.strerror
-        )
-    except OSError as error:
-        _LOGGER.error(
-            "Failed to fetch/cache update of %s: %s", filename, error.strerror
+        err_json = (
+            ERR_JSON_DRIVERS
+            if drivers_or_constructors == UPDATE_DRIVERS
+            else ERR_JSON_CONSTRUCTORS
         )
 
+        try:
+            thejson = json.loads(self.hass.data[DOMAIN].data[filename])
+            return thejson["MRData"]
 
-def download_update_once_drivers():
-    """Fetches a single update of driver data."""
-    download_update_once(URL_DRIVERS, FILENAME_DRIVERS)
+        except JSONDecodeError as error:
+            _LOGGER.error(
+                "Failed to read cache of F1 %s data: %s",
+                drivers_or_constructors,
+                error.msg,
+            )
+            return json.loads(err_json)
 
+    def get_drivers_update(self):
+        """Fetches the update from the cache."""
+        return self.get_drivers_constructors_update(UPDATE_DRIVERS)
 
-def download_update_once_constructors():
-    """Fetches a single update of constructor data."""
-    download_update_once(URL_CONSTRUCTORS, FILENAME_CONSTRUCTORS)
+    def get_driver_count(self):
+        """Gets the total number of drivers in the source data."""
+        return int(self.get_drivers_update()["total"])
 
+    def get_update_for_drivers_place(self, place):
+        """Fetches data for a specific place in the standings."""
 
-def download_update_once_season():
-    """Fetches a single update of season data."""
-    download_update_once(URL_SEASON, FILENAME_SEASON)
-
-
-def download_update_regularly(url, filename, freq):
-    """Launches an async task that downloads an update from the hosted data regularly."""
-    _LOGGER.info("Updating %s every %s seconds", filename, str(freq))
-    while 1:
-        time.sleep(freq)
-        download_update_once(url, filename)
-
-
-def download_update_regularly_drivers(freq):
-    """Launches an async task that downloads an update from the hosted driver data regularly."""
-    download_update_regularly(URL_DRIVERS, FILENAME_DRIVERS, freq)
-
-
-def download_update_regularly_constructors(freq):
-    """Launches an async task that downloads an update from the hosted constructor data regularly."""
-    download_update_regularly(URL_CONSTRUCTORS, FILENAME_CONSTRUCTORS, freq)
-
-
-def download_update_regularly_season(freq):
-    """Launches an async task that downloads an update from the hosted season data regularly."""
-    download_update_regularly(URL_SEASON, FILENAME_SEASON, freq)
-
-
-def get_drivers_constructors_update(drivers_or_constructors):
-    """Fetches the update from the cache."""
-
-    filename = (
-        FILENAME_DRIVERS
-        if drivers_or_constructors == UPDATE_DRIVERS
-        else FILENAME_CONSTRUCTORS
-    )
-
-    err_json = (
-        ERR_JSON_DRIVERS
-        if drivers_or_constructors == UPDATE_DRIVERS
-        else ERR_JSON_CONSTRUCTORS
-    )
-
-    try:
-        with open(
-            get_filepath(filename),
-            encoding="utf_8",
-        ) as cache_file:
-            lines = cache_file.read()
-        thejson = json.loads(lines)
-        return thejson["MRData"]
-
-    except OSError as error:
-        _LOGGER.error(
-            "Failed to read cache of F1 %s data: %s",
-            drivers_or_constructors,
-            error.strerror,
+        update = self.get_drivers_update()
+        driver_data = update["StandingsTable"]["StandingsLists"][0]["DriverStandings"][
+            place - 1
+        ]
+        ret = {}
+        ret["driver"] = (
+            driver_data["Driver"]["givenName"]
+            + " "
+            + driver_data["Driver"]["familyName"]
         )
-        return json.loads(err_json)
-    except JSONDecodeError as error:
-        _LOGGER.error(
-            "Failed to read cache of F1 %s data: %s",
-            drivers_or_constructors,
-            error.msg,
+        ret["points"] = driver_data["points"]
+        ret["nationality"] = driver_data["Driver"]["nationality"]
+        ret["team"] = driver_data["Constructors"][0]["name"]
+        ret["driverId"] = driver_data["Driver"]["driverId"]
+        ret["season"] = update["StandingsTable"]["season"]
+        ret["place"] = place
+
+        return ret
+
+    def get_constructors_update(self):
+        """Fetches the update from the cache."""
+        return self.get_drivers_constructors_update(UPDATE_CONSTRUCTORS)
+
+    def get_constructor_count(self):
+        """Gets the total number of drivers in the source data."""
+        return int(self.get_constructors_update()["total"])
+
+    def get_update_for_constructors_place(self, place):
+        """Fetches data for a specific place in the standings."""
+
+        update = self.get_constructors_update()
+        constructor_data = update["StandingsTable"]["StandingsLists"][0][
+            "ConstructorStandings"
+        ][place - 1]
+        ret = {}
+        ret["constructor"] = constructor_data["Constructor"]["name"]
+        ret["points"] = constructor_data["points"]
+        ret["nationality"] = constructor_data["Constructor"]["nationality"]
+        ret["constructorId"] = constructor_data["Constructor"]["constructorId"]
+        ret["season"] = update["StandingsTable"]["season"]
+        ret["place"] = place
+
+        return ret
+
+    def get_season_update(self):
+        """Fetches the update from the cache."""
+
+        try:
+            thejson = json.loads(self.hass.data[DOMAIN].data[FILENAME_SEASON])
+            return thejson["MRData"]
+
+        except JSONDecodeError as error:
+            _LOGGER.error(
+                "Failed to JSON-decode cache of F1 season data: %s", error.msg
+            )
+            return json.loads(ERR_JSON_SEASON)
+
+    def get_race_count(self):
+        """Gets the total number of races in the source data."""
+
+        return int(self.get_season_update()["total"])
+
+    def get_next_race_round(self):
+        """Gets the next race round."""
+
+        current_date = datetime.datetime.now(datetime.timezone.utc).replace(
+            tzinfo=datetime.timezone.utc
         )
-        return json.loads(err_json)
+        races = self.get_season_update()["RaceTable"]["Races"]
+        for race in races:
+            the_time = race["time"][:-1]
+            date_time_str = race["date"] + " " + the_time + " UTC"
+            race_date_time = datetime.datetime.strptime(
+                date_time_str, "%Y-%m-%d %H:%M:%S %Z"
+            ).replace(tzinfo=datetime.timezone.utc)
 
+            if race_date_time >= current_date:
+                return int(race["round"])
 
-def get_drivers_update():
-    """Fetches the update from the cache."""
-    return get_drivers_constructors_update(UPDATE_DRIVERS)
+        return self.get_race_count()
 
+    def get_update_for_race(self, race):
+        """Fetches data for a specific race."""
 
-def get_driver_count():
-    """Gets the total number of drivers in the source data."""
-    return int(get_drivers_update()["total"])
+        this_race_update = self.get_season_update()["RaceTable"]["Races"][race - 1]
 
+        ret = {}
+        ret["raceName"] = this_race_update["raceName"]
+        ret["season"] = this_race_update["season"]
+        ret["round"] = this_race_update["round"]
+        ret["date"] = this_race_update["date"]
+        ret["time"] = this_race_update["time"]
+        ret["fp1_date"] = this_race_update["FirstPractice"]["date"]
+        ret["fp1_time"] = this_race_update["FirstPractice"]["time"]
+        ret["fp2_date"] = this_race_update["SecondPractice"]["date"]
+        ret["fp2_time"] = this_race_update["SecondPractice"]["time"]
 
-def get_update_for_drivers_place(place):
-    """Fetches data for a specific place in the standings."""
+        if "ThirdPractice" in this_race_update:
+            ret["fp3_date"] = this_race_update["ThirdPractice"]["date"]
+            ret["fp3_time"] = this_race_update["ThirdPractice"]["time"]
 
-    update = get_drivers_update()
-    driver_data = update["StandingsTable"]["StandingsLists"][0]["DriverStandings"][
-        place - 1
-    ]
-    ret = {}
-    ret["driver"] = (
-        driver_data["Driver"]["givenName"] + " " + driver_data["Driver"]["familyName"]
-    )
-    ret["points"] = driver_data["points"]
-    ret["nationality"] = driver_data["Driver"]["nationality"]
-    ret["team"] = driver_data["Constructors"][0]["name"]
-    ret["driverId"] = driver_data["Driver"]["driverId"]
-    ret["season"] = update["StandingsTable"]["season"]
-    ret["place"] = place
+        ret["qual_date"] = this_race_update["Qualifying"]["date"]
+        ret["qual_time"] = this_race_update["Qualifying"]["time"]
 
-    return ret
+        if "Sprint" in this_race_update:
+            ret["sprint_date"] = this_race_update["Sprint"]["date"]
+            ret["sprint_time"] = this_race_update["Sprint"]["time"]
 
-
-def get_constructors_update():
-    """Fetches the update from the cache."""
-
-    return get_drivers_constructors_update(UPDATE_CONSTRUCTORS)
-
-
-def get_constructor_count():
-    """Gets the total number of drivers in the source data."""
-
-    return int(get_constructors_update()["total"])
-
-
-def get_update_for_constructors_place(place):
-    """Fetches data for a specific place in the standings."""
-
-    update = get_constructors_update()
-    constructor_data = update["StandingsTable"]["StandingsLists"][0][
-        "ConstructorStandings"
-    ][place - 1]
-    ret = {}
-    ret["constructor"] = constructor_data["Constructor"]["name"]
-    ret["points"] = constructor_data["points"]
-    ret["nationality"] = constructor_data["Constructor"]["nationality"]
-    ret["constructorId"] = constructor_data["Constructor"]["constructorId"]
-    ret["season"] = update["StandingsTable"]["season"]
-    ret["place"] = place
-
-    return ret
-
-
-def get_season_update():
-    """Fetches the update from the cache."""
-
-    try:
-        with open(
-            get_filepath(FILENAME_SEASON),
-            encoding="utf_8",
-        ) as cache_file:
-            lines = cache_file.read()
-        thejson = json.loads(lines)
-        return thejson["MRData"]
-
-    except OSError as error:
-        _LOGGER.error("Failed to read cache of F1 season data: %s", error.strerror)
-        return json.loads(ERR_JSON_SEASON)
-    except JSONDecodeError as error:
-        _LOGGER.error("Failed to JSON-decode cache of F1 season data: %s", error.msg)
-        return json.loads(ERR_JSON_SEASON)
-
-
-def get_race_count():
-    """Gets the total number of races in the source data."""
-
-    return int(get_season_update()["total"])
-
-
-def get_next_race_round():
-    """Gets the next race round."""
-
-    current_date = datetime.datetime.now(datetime.timezone.utc).replace(
-        tzinfo=datetime.timezone.utc
-    )
-    races = get_season_update()["RaceTable"]["Races"]
-    for race in races:
-        the_time = race["time"][:-1]
-        date_time_str = race["date"] + " " + the_time + " UTC"
-        race_date_time = datetime.datetime.strptime(
-            date_time_str, "%Y-%m-%d %H:%M:%S %Z"
-        ).replace(tzinfo=datetime.timezone.utc)
-
-        if race_date_time >= current_date:
-            return int(race["round"])
-
-    return get_race_count()
-
-
-def get_update_for_race(race):
-    """Fetches data for a specific race."""
-
-    this_race_update = get_season_update()["RaceTable"]["Races"][race - 1]
-
-    ret = {}
-    ret["raceName"] = this_race_update["raceName"]
-    ret["season"] = this_race_update["season"]
-    ret["round"] = this_race_update["round"]
-    ret["date"] = this_race_update["date"]
-    ret["time"] = this_race_update["time"]
-    ret["fp1_date"] = this_race_update["FirstPractice"]["date"]
-    ret["fp1_time"] = this_race_update["FirstPractice"]["time"]
-    ret["fp2_date"] = this_race_update["SecondPractice"]["date"]
-    ret["fp2_time"] = this_race_update["SecondPractice"]["time"]
-
-    if "ThirdPractice" in this_race_update:
-        ret["fp3_date"] = this_race_update["ThirdPractice"]["date"]
-        ret["fp3_time"] = this_race_update["ThirdPractice"]["time"]
-
-    ret["qual_date"] = this_race_update["Qualifying"]["date"]
-    ret["qual_time"] = this_race_update["Qualifying"]["time"]
-
-    if "Sprint" in this_race_update:
-        ret["sprint_date"] = this_race_update["Sprint"]["date"]
-        ret["sprint_time"] = this_race_update["Sprint"]["time"]
-
-    return ret
+        return ret

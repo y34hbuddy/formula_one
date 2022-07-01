@@ -13,6 +13,8 @@ from . import f1_update
 
 import threading
 
+DOMAIN = "formula_one"
+
 
 def setup_platform(
     hass: HomeAssistant,
@@ -27,45 +29,51 @@ def setup_platform(
     if "update_frequency_sec" in config.keys():
         cfg_update_frequency_sec = config["update_frequency_sec"]
 
-    f1_update.download_update_once_drivers()
-    f1_update.download_update_once_constructors()
-    f1_update.download_update_once_season()
+    hass.data[DOMAIN] = f1_update.F1Data()
+    f1_data_handler = f1_update.F1DataHandler(hass)
 
-    driver_count = f1_update.get_driver_count()
-    constructor_count = f1_update.get_constructor_count()
-    race_count = f1_update.get_race_count()
+    f1_data_handler.download_update_once_drivers()
+    f1_data_handler.download_update_once_constructors()
+    f1_data_handler.download_update_once_season()
+
+    driver_count = f1_data_handler.get_driver_count()
+    constructor_count = f1_data_handler.get_constructor_count()
+    race_count = f1_data_handler.get_race_count()
 
     thread_drivers = threading.Thread(
-        target=f1_update.download_update_regularly_drivers,
+        target=f1_data_handler.download_update_regularly_drivers,
         args=(cfg_update_frequency_sec,),
         daemon=True,
     )
     thread_drivers.start()
 
     thread_constructors = threading.Thread(
-        target=f1_update.download_update_regularly_constructors,
+        target=f1_data_handler.download_update_regularly_constructors,
         args=(cfg_update_frequency_sec,),
         daemon=True,
     )
     thread_constructors.start()
 
     thread_season = threading.Thread(
-        target=f1_update.download_update_regularly_season,
+        target=f1_data_handler.download_update_regularly_season,
         args=(cfg_update_frequency_sec,),
         daemon=True,
     )
     thread_season.start()
 
-    entities_to_add = [F1NextRaceNameSensor(), F1NextRaceDateSensor()]
+    entities_to_add = [
+        F1NextRaceNameSensor(f1_data_handler),
+        F1NextRaceDateSensor(f1_data_handler),
+    ]
 
     for i in range(1, driver_count + 1):
-        entities_to_add.append(F1DriversSensor(i))
+        entities_to_add.append(F1DriversSensor(f1_data_handler, i))
 
     for i in range(1, constructor_count + 1):
-        entities_to_add.append(F1ConstructorsSensor(i))
+        entities_to_add.append(F1ConstructorsSensor(f1_data_handler, i))
 
     for i in range(1, race_count + 1):
-        entities_to_add.append(F1RaceSensor(i))
+        entities_to_add.append(F1RaceSensor(f1_data_handler, i))
 
     add_entities(entities_to_add)
 
@@ -73,19 +81,17 @@ def setup_platform(
 class F1DriversSensor(SensorEntity):
     """Representation of a Sensor."""
 
-    def __init__(self, driver_num) -> None:
+    def __init__(self, f1_data_handler, driver_num) -> None:
         super().__init__()
 
         self.driver_num = driver_num
+        self.f1_data_handler = f1_data_handler
 
-        attr_name = "F1 Driver "
-
+        self._attr_name = "F1 Driver "
         if driver_num < 10:
-            attr_name += "0"
+            self._attr_name += "0"
+        self._attr_name += str(driver_num)
 
-        attr_name += str(driver_num)
-
-        self._attr_name = attr_name
         self._attr_native_unit_of_measurement = None
         self._attr_device_class = None
         self._attr_state_class = None
@@ -94,7 +100,7 @@ class F1DriversSensor(SensorEntity):
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
 
-        driver_data = f1_update.get_update_for_drivers_place(self.driver_num)
+        driver_data = self.f1_data_handler.get_update_for_drivers_place(self.driver_num)
         ret = {}
         ret["points"] = driver_data["points"]
         ret["nationality"] = driver_data["nationality"]
@@ -106,17 +112,18 @@ class F1DriversSensor(SensorEntity):
 
     def update(self) -> None:
         """Fetch new state data for the sensor."""
-        driver_data = f1_update.get_update_for_drivers_place(self.driver_num)
+        driver_data = self.f1_data_handler.get_update_for_drivers_place(self.driver_num)
         self._attr_native_value = driver_data["driver"]
 
 
 class F1ConstructorsSensor(SensorEntity):
     """Representation of a Sensor."""
 
-    def __init__(self, constructor_num) -> None:
+    def __init__(self, f1_data_handler, constructor_num) -> None:
         super().__init__()
 
         self.constructor_num = constructor_num
+        self.f1_data_handler = f1_data_handler
 
         attr_name = "F1 Constructor "
 
@@ -134,7 +141,7 @@ class F1ConstructorsSensor(SensorEntity):
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
 
-        constructor_data = f1_update.get_update_for_constructors_place(
+        constructor_data = self.f1_data_handler.get_update_for_constructors_place(
             self.constructor_num
         )
         ret = {}
@@ -148,7 +155,7 @@ class F1ConstructorsSensor(SensorEntity):
     def update(self) -> None:
         """Fetch new state data for the sensor."""
 
-        constructor_data = f1_update.get_update_for_constructors_place(
+        constructor_data = self.f1_data_handler.get_update_for_constructors_place(
             self.constructor_num
         )
         self._attr_native_value = constructor_data["constructor"]
@@ -157,42 +164,53 @@ class F1ConstructorsSensor(SensorEntity):
 class F1NextRaceNameSensor(SensorEntity):
     """Representation of a Sensor."""
 
-    _attr_name = "F1 Next Race Name"
-    _attr_native_unit_of_measurement = None
-    _attr_device_class = None
-    _attr_state_class = None
+    def __init__(self, f1_data_handler) -> None:
+        super().__init__()
+        self.f1_data_handler = f1_data_handler
+        self._attr_name = "F1 Next Race Name"
+        self._attr_native_unit_of_measurement = None
+        self._attr_device_class = None
+        self._attr_state_class = None
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
 
         This is the only method that should fetch new data for Home Assistant.
         """
-        race_data = f1_update.get_update_for_race(f1_update.get_next_race_round())
+        race_data = self.f1_data_handler.get_update_for_race(
+            self.f1_data_handler.get_next_race_round()
+        )
         self._attr_native_value = race_data["raceName"]
 
 
 class F1NextRaceDateSensor(SensorEntity):
     """Representation of a Sensor."""
 
-    _attr_name = "F1 Next Race Date"
-    _attr_native_unit_of_measurement = None
-    _attr_device_class = None
-    _attr_state_class = None
+    def __init__(self, f1_data_handler) -> None:
+        super().__init__()
+        self.f1_data_handler = f1_data_handler
+        self._attr_name = "F1 Next Race Date"
+        self._attr_native_unit_of_measurement = None
+        self._attr_device_class = None
+        self._attr_state_class = None
 
     def update(self) -> None:
         """Fetch new state data for the sensor."""
 
-        race_data = f1_update.get_update_for_race(f1_update.get_next_race_round())
+        race_data = self.f1_data_handler.get_update_for_race(
+            self.f1_data_handler.get_next_race_round()
+        )
         self._attr_native_value = race_data["date"] + "T" + race_data["time"]
 
 
 class F1RaceSensor(SensorEntity):
     """Representation of a Sensor."""
 
-    def __init__(self, race_num) -> None:
+    def __init__(self, f1_data_handler, race_num) -> None:
         super().__init__()
 
         self.race_num = race_num
+        self.f1_data_handler = f1_data_handler
 
         attr_name = "F1 Race "
 
@@ -210,7 +228,7 @@ class F1RaceSensor(SensorEntity):
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
 
-        race_data = f1_update.get_update_for_race(self.race_num)
+        race_data = self.f1_data_handler.get_update_for_race(self.race_num)
         ret = {}
         ret["season"] = race_data["season"]
         ret["round"] = race_data["round"]
@@ -237,5 +255,5 @@ class F1RaceSensor(SensorEntity):
     def update(self) -> None:
         """Fetch new state data for the sensor."""
 
-        race_data = f1_update.get_update_for_race(self.race_num)
+        race_data = self.f1_data_handler.get_update_for_race(self.race_num)
         self._attr_native_value = race_data["raceName"]
