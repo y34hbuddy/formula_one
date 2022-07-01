@@ -9,13 +9,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import const, f1_update
+from . import f1_update
+from .const import DOMAIN, KEY_DRIVERS, KEY_CONSTRUCTORS, KEY_SEASON
 
 import threading
-
-KEY_DRIVERS = const.KEY_DRIVERS
-KEY_CONSTRUCTORS = const.KEY_CONSTRUCTORS
-KEY_SEASON = const.KEY_SEASON
 
 
 def setup_platform(
@@ -31,7 +28,7 @@ def setup_platform(
     if "update_frequency_sec" in config.keys():
         cfg_update_frequency_sec = config["update_frequency_sec"]
 
-    hass.data[const.DOMAIN] = f1_update.F1Data()
+    hass.data[DOMAIN] = f1_update.F1Data()
     f1_data_handler = f1_update.F1DataHandler(hass)
 
     f1_data_handler.download_update_once(KEY_DRIVERS)

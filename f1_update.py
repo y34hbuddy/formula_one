@@ -6,13 +6,20 @@ import logging
 import requests
 import time
 
-from . import const
+from .const import (
+    DOMAIN,
+    KEY_DRIVERS,
+    KEY_CONSTRUCTORS,
+    KEY_SEASON,
+    URL_DRIVERS,
+    URL_CONSTRUCTORS,
+    URL_SEASON,
+    ERR_JSON_DRIVERS,
+    ERR_JSON_CONSTRUCTORS,
+    ERR_JSON_SEASON,
+)
 
-_LOGGER = logging.getLogger(const.DOMAIN)
-
-KEY_DRIVERS = const.KEY_DRIVERS
-KEY_CONSTRUCTORS = const.KEY_CONSTRUCTORS
-KEY_SEASON = const.KEY_SEASON
+_LOGGER = logging.getLogger(DOMAIN)
 
 
 class F1Data:
@@ -37,14 +44,14 @@ class F1DataHandler:
 
         url = ""
         if update_type == KEY_DRIVERS:
-            url = const.URL_DRIVERS
+            url = URL_DRIVERS
         elif update_type == KEY_CONSTRUCTORS:
-            url = const.URL_CONSTRUCTORS
+            url = URL_CONSTRUCTORS
         else:
-            url = const.URL_SEASON
+            url = URL_SEASON
 
         req = requests.get(url)
-        self.hass.data[const.DOMAIN].data[update_type] = req.text
+        self.hass.data[DOMAIN].data[update_type] = req.text
 
     def download_update_regularly(self, update_type, freq):
         """Launches an async task that downloads an update from the hosted data regularly."""
@@ -57,14 +64,14 @@ class F1DataHandler:
         """Fetches the update from the cache."""
         err_json = ""
         if update_type == KEY_DRIVERS:
-            err_json = const.ERR_JSON_DRIVERS
+            err_json = ERR_JSON_DRIVERS
         elif update_type == KEY_CONSTRUCTORS:
-            err_json = const.ERR_JSON_CONSTRUCTORS
+            err_json = ERR_JSON_CONSTRUCTORS
         else:
-            err_json = const.ERR_JSON_SEASON
+            err_json = ERR_JSON_SEASON
 
         try:
-            thejson = json.loads(self.hass.data[const.DOMAIN].data[update_type])
+            thejson = json.loads(self.hass.data[DOMAIN].data[update_type])
             return thejson["MRData"]
 
         except JSONDecodeError as error:
