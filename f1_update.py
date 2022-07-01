@@ -12,6 +12,7 @@ _LOGGER = logging.getLogger("formula_one")
 URL_DRIVERS = "http://ergast.com/api/f1/current/driverStandings.json"
 URL_CONSTRUCTORS = "http://ergast.com/api/f1/current/constructorStandings.json"
 URL_SEASON = "http://ergast.com/api/f1/current.json"
+
 FILENAME_DRIVERS = "f1_drivers.json"
 FILENAME_CONSTRUCTORS = "f1_constructors.json"
 FILENAME_SEASON = "f1_season.json"
@@ -19,6 +20,9 @@ FILENAME_SEASON = "f1_season.json"
 ERR_JSON_DRIVERS = '{"StandingsTable":{"season":"error","StandingsLists":[{"season":"error","round":"error","DriverStandings":[{"position":"1","positionText":"1","points":"error","wins":"error","Driver":{"driverId":"error","givenName":"error","familyName":"error","nationality":"error"},"Constructors":[{"constructorId":"error","name":"error","nationality":"error"}]}]}]}}'
 ERR_JSON_CONSTRUCTORS = '{"StandingsTable":{"season":"error","StandingsLists":[{"season":"error","round":"1","ConstructorStandings":[{"position":"1","positionText":"1","points":"0","wins":"0","Constructor":{"constructorId":"error","url":"error","name":"error","nationality":"error"}}]}]}}'
 ERR_JSON_SEASON = '{"xmlns":"http://ergast.com/mrd/1.5","series":"f1","url":"http://ergast.com/api/f1/current.json","limit":"30","offset":"0","total":"1","RaceTable":{"season":"error","Races":[{"season":"error","round":"1","url":"error","raceName":"error","Circuit":{"circuitId":"error","url":"error","circuitName":"error","Location":{"lat":"error","long":"error","locality":"error","country":"error"}},"date":"2022-03-20","time":"15:00:00Z","FirstPractice":{"date":"2022-03-18","time":"12:00:00Z"},"SecondPractice":{"date":"2022-03-18","time":"15:00:00Z"},"ThirdPractice":{"date":"2022-03-19","time":"12:00:00Z"},"Qualifying":{"date":"2022-03-19","time":"15:00:00Z"}}]}}'
+
+UPDATE_DRIVERS = "driver"
+UPDATE_CONSTRUCTORS = "constructor"
 
 
 def get_filepath(filename):
@@ -89,11 +93,23 @@ def download_update_regularly_season(freq):
     download_update_regularly(URL_SEASON, FILENAME_SEASON, freq)
 
 
-def get_drivers_update():
+def get_drivers_constructors_update(drivers_or_constructors):
     """Fetches the update from the cache."""
+    filename = (
+        FILENAME_DRIVERS
+        if drivers_or_constructors == UPDATE_DRIVERS
+        else FILENAME_CONSTRUCTORS
+    )
+
+    err_json = (
+        ERR_JSON_DRIVERS
+        if drivers_or_constructors == UPDATE_DRIVERS
+        else ERR_JSON_CONSTRUCTORS
+    )
+
     try:
         with open(
-            get_filepath(FILENAME_DRIVERS),
+            get_filepath(filename),
             encoding="utf_8",
         ) as cache_file:
             lines = cache_file.read()
@@ -101,11 +117,24 @@ def get_drivers_update():
         return thejson["MRData"]
 
     except OSError as error:
-        _LOGGER.error("Failed to read cache of F1 driver data: %s", error.strerror)
-        return json.loads(ERR_JSON_DRIVERS)
+        _LOGGER.error(
+            "Failed to read cache of F1 %s data: %s",
+            drivers_or_constructors,
+            error.strerror,
+        )
+        return json.loads(err_json)
     except JSONDecodeError as error:
-        _LOGGER.error("Failed to read cache of F1 driver data: %s", error.msg)
-        return json.loads(ERR_JSON_DRIVERS)
+        _LOGGER.error(
+            "Failed to read cache of F1 %s data: %s",
+            drivers_or_constructors,
+            error.msg,
+        )
+        return json.loads(err_json)
+
+
+def get_drivers_update():
+    """Fetches the update from the cache."""
+    return get_drivers_constructors_update(UPDATE_DRIVERS)
 
 
 def get_driver_count():
@@ -135,20 +164,7 @@ def get_update_for_drivers_place(place):
 
 def get_constructors_update():
     """Fetches the update from the cache."""
-    try:
-        with open(
-            get_filepath(FILENAME_CONSTRUCTORS),
-            encoding="utf_8",
-        ) as cache_file:
-            lines = cache_file.read()
-        thejson = json.loads(lines)
-        return thejson["MRData"]
-    except OSError as error:
-        _LOGGER.error("Failed to read cache of F1 constructor data: %s", error.strerror)
-        return json.loads(ERR_JSON_CONSTRUCTORS)
-    except JSONDecodeError as error:
-        _LOGGER.error("Failed to read cache of F1 constructor data: %s", error.msg)
-        return json.loads(ERR_JSON_CONSTRUCTORS)
+    return get_drivers_constructors_update(UPDATE_CONSTRUCTORS)
 
 
 def get_constructor_count():
