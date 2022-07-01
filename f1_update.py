@@ -110,10 +110,7 @@ def get_drivers_update():
 
 def get_driver_count():
     """Gets the total number of drivers in the source data."""
-    update = get_drivers_update()["StandingsTable"]["StandingsLists"][0][
-        "DriverStandings"
-    ]
-    return len(update)
+    return int(get_drivers_update()["total"])
 
 
 def get_update_for_drivers_place(place):
@@ -160,10 +157,7 @@ def get_constructors_update():
 
 def get_constructor_count():
     """Gets the total number of drivers in the source data."""
-    update = get_constructors_update()["StandingsTable"]["StandingsLists"][0][
-        "ConstructorStandings"
-    ]
-    return len(update)
+    return int(get_constructors_update()["total"])
 
 
 def get_update_for_constructors_place(place):
