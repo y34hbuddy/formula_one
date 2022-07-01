@@ -22,13 +22,13 @@ _LOGGER = logging.getLogger(DOMAIN)
 
 
 class F1Data:
-    """Holds the JSON strings for each data set"""
+    """Holds the JSON objects for each data set"""
 
     def __init__(self):
         self.data = {}
-        self.data[KEY_DRIVERS] = json.loads("{}")
-        self.data[KEY_CONSTRUCTORS] = json.loads("{}")
-        self.data[KEY_SEASON] = json.loads("{}")
+        self.data[KEY_DRIVERS] = {}
+        self.data[KEY_CONSTRUCTORS] = {}
+        self.data[KEY_SEASON] = {}
 
 
 class F1DataHandler:

@@ -181,13 +181,10 @@ class F1NextRaceNameSensor(SensorEntity):
         self._attr_state_class = None
 
     def update(self) -> None:
-        """Fetch new state data for the sensor.
+        """Fetch new state data for the sensor."""
 
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        race_data = self.f1_data_handler.get_update_for_race(
-            self.f1_data_handler.get_next_race_round()
-        )
+        handler = self.f1_data_handler
+        race_data = handler.get_update_for_race(handler.get_next_race_round())
         self._attr_native_value = race_data["raceName"]
 
 
@@ -204,10 +201,8 @@ class F1NextRaceDateSensor(SensorEntity):
 
     def update(self) -> None:
         """Fetch new state data for the sensor."""
-
-        race_data = self.f1_data_handler.get_update_for_race(
-            self.f1_data_handler.get_next_race_round()
-        )
+        handler = self.f1_data_handler
+        race_data = handler.get_update_for_race(handler.get_next_race_round())
         self._attr_native_value = race_data["date"] + "T" + race_data["time"]
 
 
