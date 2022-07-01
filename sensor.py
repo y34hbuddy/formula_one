@@ -9,11 +9,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
+from . import const
 from . import f1_update
 
 import threading
 
-DOMAIN = "formula_one"
+KEY_DRIVERS = const.KEY_DRIVERS
+KEY_CONSTRUCTORS = const.KEY_CONSTRUCTORS
+KEY_SEASON = const.KEY_SEASON
 
 
 def setup_platform(
@@ -29,34 +32,43 @@ def setup_platform(
     if "update_frequency_sec" in config.keys():
         cfg_update_frequency_sec = config["update_frequency_sec"]
 
-    hass.data[DOMAIN] = f1_update.F1Data()
+    hass.data[const.DOMAIN] = f1_update.F1Data()
     f1_data_handler = f1_update.F1DataHandler(hass)
 
-    f1_data_handler.download_update_once_drivers()
-    f1_data_handler.download_update_once_constructors()
-    f1_data_handler.download_update_once_season()
+    f1_data_handler.download_update_once(KEY_DRIVERS)
+    f1_data_handler.download_update_once(KEY_CONSTRUCTORS)
+    f1_data_handler.download_update_once(KEY_SEASON)
 
     driver_count = f1_data_handler.get_driver_count()
     constructor_count = f1_data_handler.get_constructor_count()
     race_count = f1_data_handler.get_race_count()
 
     thread_drivers = threading.Thread(
-        target=f1_data_handler.download_update_regularly_drivers,
-        args=(cfg_update_frequency_sec,),
+        target=f1_data_handler.download_update_regularly,
+        args=(
+            KEY_DRIVERS,
+            cfg_update_frequency_sec,
+        ),
         daemon=True,
     )
     thread_drivers.start()
 
     thread_constructors = threading.Thread(
-        target=f1_data_handler.download_update_regularly_constructors,
-        args=(cfg_update_frequency_sec,),
+        target=f1_data_handler.download_update_regularly,
+        args=(
+            KEY_CONSTRUCTORS,
+            cfg_update_frequency_sec,
+        ),
         daemon=True,
     )
     thread_constructors.start()
 
     thread_season = threading.Thread(
-        target=f1_data_handler.download_update_regularly_season,
-        args=(cfg_update_frequency_sec,),
+        target=f1_data_handler.download_update_regularly,
+        args=(
+            KEY_SEASON,
+            cfg_update_frequency_sec,
+        ),
         daemon=True,
     )
     thread_season.start()
