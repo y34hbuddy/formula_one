@@ -1,7 +1,6 @@
 """Handles the data layer for formula_one integration."""
 import datetime
 import json
-from json import JSONDecodeError
 import logging
 import requests
 import time
@@ -27,9 +26,9 @@ class F1Data:
 
     def __init__(self):
         self.data = {}
-        self.data[KEY_DRIVERS] = ""
-        self.data[KEY_CONSTRUCTORS] = ""
-        self.data[KEY_SEASON] = ""
+        self.data[KEY_DRIVERS] = json.loads("{}")
+        self.data[KEY_CONSTRUCTORS] = json.loads("{}")
+        self.data[KEY_SEASON] = json.loads("{}")
 
 
 class F1DataHandler:
@@ -43,15 +42,24 @@ class F1DataHandler:
         _LOGGER.info("Fetching an update of %s", update_type)
 
         url = ""
+        err_json = ""
         if update_type == KEY_DRIVERS:
             url = URL_DRIVERS
+            err_json = ERR_JSON_DRIVERS
         elif update_type == KEY_CONSTRUCTORS:
             url = URL_CONSTRUCTORS
+            err_json = ERR_JSON_CONSTRUCTORS
         else:
             url = URL_SEASON
+            err_json = ERR_JSON_SEASON
 
-        req = requests.get(url)
-        self.hass.data[DOMAIN].data[update_type] = req.text
+        try:
+            req = requests.get(url)
+            self.hass.data[DOMAIN].data[update_type] = req.json()
+
+        except requests.exceptions.JSONDecodeError as err:
+            _LOGGER.error("Failed to decode JSON from source: %s", err.strerror)
+            self.hass.data[DOMAIN].data[update_type] = json.loads(err_json)
 
     def download_update_regularly(self, update_type, freq):
         """Launches an async task that downloads an update from the hosted data regularly."""
@@ -62,25 +70,7 @@ class F1DataHandler:
 
     def get_update(self, update_type):
         """Fetches the update from the cache."""
-        err_json = ""
-        if update_type == KEY_DRIVERS:
-            err_json = ERR_JSON_DRIVERS
-        elif update_type == KEY_CONSTRUCTORS:
-            err_json = ERR_JSON_CONSTRUCTORS
-        else:
-            err_json = ERR_JSON_SEASON
-
-        try:
-            thejson = json.loads(self.hass.data[DOMAIN].data[update_type])
-            return thejson["MRData"]
-
-        except JSONDecodeError as error:
-            _LOGGER.error(
-                "Failed to read cache of F1 %s data: %s",
-                update_type,
-                error.msg,
-            )
-            return json.loads(err_json)
+        return self.hass.data[DOMAIN].data[update_type]["MRData"]
 
     def get_driver_count(self):
         """Gets the total number of drivers in the source data."""
