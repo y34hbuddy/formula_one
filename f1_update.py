@@ -10,20 +10,17 @@ DOMAIN = "formula_one"
 
 _LOGGER = logging.getLogger(DOMAIN)
 
+KEY_DRIVERS = "drivers"
+KEY_CONSTRUCTORS = "constructors"
+KEY_SEASON = "season"
+
 URL_DRIVERS = "http://ergast.com/api/f1/current/driverStandings.json"
 URL_CONSTRUCTORS = "http://ergast.com/api/f1/current/constructorStandings.json"
 URL_SEASON = "http://ergast.com/api/f1/current.json"
 
-FILENAME_DRIVERS = "f1_drivers.json"
-FILENAME_CONSTRUCTORS = "f1_constructors.json"
-FILENAME_SEASON = "f1_season.json"
-
 ERR_JSON_DRIVERS = '{"StandingsTable":{"season":"error","StandingsLists":[{"season":"error","round":"error","DriverStandings":[{"position":"1","positionText":"1","points":"error","wins":"error","Driver":{"driverId":"error","givenName":"error","familyName":"error","nationality":"error"},"Constructors":[{"constructorId":"error","name":"error","nationality":"error"}]}]}]}}'
 ERR_JSON_CONSTRUCTORS = '{"StandingsTable":{"season":"error","StandingsLists":[{"season":"error","round":"1","ConstructorStandings":[{"position":"1","positionText":"1","points":"0","wins":"0","Constructor":{"constructorId":"error","url":"error","name":"error","nationality":"error"}}]}]}}'
 ERR_JSON_SEASON = '{"xmlns":"http://ergast.com/mrd/1.5","series":"f1","url":"http://ergast.com/api/f1/current.json","limit":"30","offset":"0","total":"1","RaceTable":{"season":"error","Races":[{"season":"error","round":"1","url":"error","raceName":"error","Circuit":{"circuitId":"error","url":"error","circuitName":"error","Location":{"lat":"error","long":"error","locality":"error","country":"error"}},"date":"2022-03-20","time":"15:00:00Z","FirstPractice":{"date":"2022-03-18","time":"12:00:00Z"},"SecondPractice":{"date":"2022-03-18","time":"15:00:00Z"},"ThirdPractice":{"date":"2022-03-19","time":"12:00:00Z"},"Qualifying":{"date":"2022-03-19","time":"15:00:00Z"}}]}}'
-
-UPDATE_DRIVERS = "driver"
-UPDATE_CONSTRUCTORS = "constructor"
 
 
 class F1Data:
@@ -31,9 +28,9 @@ class F1Data:
 
     def __init__(self):
         self.data = {}
-        self.data[FILENAME_DRIVERS] = ""
-        self.data[FILENAME_CONSTRUCTORS] = ""
-        self.data[FILENAME_SEASON] = ""
+        self.data[KEY_DRIVERS] = ""
+        self.data[KEY_CONSTRUCTORS] = ""
+        self.data[KEY_SEASON] = ""
 
 
 class F1DataHandler:
@@ -42,73 +39,74 @@ class F1DataHandler:
     def __init__(self, hass):
         self.hass = hass
 
-    def download_update_once(self, url, filename):
+    def download_update_once(self, update_type):
         """Fetches a single update."""
-        _LOGGER.info("Fetching an update of %s", filename)
+        _LOGGER.info("Fetching an update of %s", update_type)
+
+        url = ""
+        if update_type == KEY_DRIVERS:
+            url = URL_DRIVERS
+        elif update_type == KEY_CONSTRUCTORS:
+            url = URL_CONSTRUCTORS
+        else:
+            url = URL_SEASON
+
         req = requests.get(url)
-        self.hass.data[DOMAIN].data[filename] = req.text
+        self.hass.data[DOMAIN].data[update_type] = req.text
 
     def download_update_once_drivers(self):
         """Fetches a single update of driver data."""
-        return self.download_update_once(URL_DRIVERS, FILENAME_DRIVERS)
+        return self.download_update_once(KEY_DRIVERS)
 
     def download_update_once_constructors(self):
         """Fetches a single update of constructor data."""
-        self.download_update_once(URL_CONSTRUCTORS, FILENAME_CONSTRUCTORS)
+        self.download_update_once(KEY_CONSTRUCTORS)
 
     def download_update_once_season(self):
         """Fetches a single update of season data."""
-        self.download_update_once(URL_SEASON, FILENAME_SEASON)
+        self.download_update_once(KEY_SEASON)
 
-    def download_update_regularly(self, url, filename, freq):
+    def download_update_regularly(self, url, update_type, freq):
         """Launches an async task that downloads an update from the hosted data regularly."""
-        _LOGGER.info("Updating %s every %s seconds", filename, str(freq))
+        _LOGGER.info("Updating %s every %s seconds", update_type, str(freq))
         while 1:
             time.sleep(freq)
-            self.download_update_once(url, filename)
+            self.download_update_once(update_type)
 
     def download_update_regularly_drivers(self, freq):
         """Launches an async task that downloads an update from the hosted driver data regularly."""
-        self.download_update_regularly(URL_DRIVERS, FILENAME_DRIVERS, freq)
+        self.download_update_regularly(URL_DRIVERS, KEY_DRIVERS, freq)
 
     def download_update_regularly_constructors(self, freq):
         """Launches an async task that downloads an update from the hosted constructor data regularly."""
-        self.download_update_regularly(URL_CONSTRUCTORS, FILENAME_CONSTRUCTORS, freq)
+        self.download_update_regularly(URL_CONSTRUCTORS, KEY_CONSTRUCTORS, freq)
 
     def download_update_regularly_season(self, freq):
         """Launches an async task that downloads an update from the hosted season data regularly."""
-        self.download_update_regularly(URL_SEASON, FILENAME_SEASON, freq)
+        self.download_update_regularly(URL_SEASON, KEY_SEASON, freq)
 
-    def get_drivers_constructors_update(self, drivers_or_constructors):
+    def get_drivers_constructors_update(self, update_type):
         """Fetches the update from the cache."""
 
-        filename = (
-            FILENAME_DRIVERS
-            if drivers_or_constructors == UPDATE_DRIVERS
-            else FILENAME_CONSTRUCTORS
-        )
-
         err_json = (
-            ERR_JSON_DRIVERS
-            if drivers_or_constructors == UPDATE_DRIVERS
-            else ERR_JSON_CONSTRUCTORS
+            ERR_JSON_DRIVERS if update_type == KEY_DRIVERS else ERR_JSON_CONSTRUCTORS
         )
 
         try:
-            thejson = json.loads(self.hass.data[DOMAIN].data[filename])
+            thejson = json.loads(self.hass.data[DOMAIN].data[update_type])
             return thejson["MRData"]
 
         except JSONDecodeError as error:
             _LOGGER.error(
                 "Failed to read cache of F1 %s data: %s",
-                drivers_or_constructors,
+                update_type,
                 error.msg,
             )
             return json.loads(err_json)
 
     def get_drivers_update(self):
         """Fetches the update from the cache."""
-        return self.get_drivers_constructors_update(UPDATE_DRIVERS)
+        return self.get_drivers_constructors_update(KEY_DRIVERS)
 
     def get_driver_count(self):
         """Gets the total number of drivers in the source data."""
@@ -138,7 +136,7 @@ class F1DataHandler:
 
     def get_constructors_update(self):
         """Fetches the update from the cache."""
-        return self.get_drivers_constructors_update(UPDATE_CONSTRUCTORS)
+        return self.get_drivers_constructors_update(KEY_CONSTRUCTORS)
 
     def get_constructor_count(self):
         """Gets the total number of drivers in the source data."""
@@ -165,7 +163,7 @@ class F1DataHandler:
         """Fetches the update from the cache."""
 
         try:
-            thejson = json.loads(self.hass.data[DOMAIN].data[FILENAME_SEASON])
+            thejson = json.loads(self.hass.data[DOMAIN].data[KEY_SEASON])
             return thejson["MRData"]
 
         except JSONDecodeError as error:
@@ -176,7 +174,6 @@ class F1DataHandler:
 
     def get_race_count(self):
         """Gets the total number of races in the source data."""
-
         return int(self.get_season_update()["total"])
 
     def get_next_race_round(self):
