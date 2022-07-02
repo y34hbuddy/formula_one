@@ -1,9 +1,7 @@
 """Platform for sensor integration."""
 from __future__ import annotations
 
-from homeassistant.components.sensor import (
-    RestoreSensor,
-)
+from homeassistant.components.sensor import RestoreSensor
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -105,7 +103,7 @@ class F1DriversSensor(RestoreSensor):
         self._attr_state_class = None
 
     async def async_added_to_hass(self):
-        """Restore previous state"""
+        """Restore previous state."""
         old_value = await self.async_get_last_sensor_data()
         if old_value:
             self._attr_native_value = old_value.native_value
@@ -152,7 +150,7 @@ class F1ConstructorsSensor(RestoreSensor):
         self._attr_state_class = None
 
     async def async_added_to_hass(self):
-        """Restore previous state"""
+        """Restore previous state."""
         old_value = await self.async_get_last_sensor_data()
         if old_value:
             self._attr_native_value = old_value.native_value
@@ -193,7 +191,7 @@ class F1NextRaceNameSensor(RestoreSensor):
         self._attr_state_class = None
 
     async def async_added_to_hass(self):
-        """Restore previous state"""
+        """Restore previous state."""
         old_value = await self.async_get_last_sensor_data()
         if old_value:
             self._attr_native_value = old_value.native_value
@@ -218,7 +216,7 @@ class F1NextRaceDateSensor(RestoreSensor):
         self._attr_state_class = None
 
     async def async_added_to_hass(self):
-        """Restore previous state"""
+        """Restore previous state."""
         old_value = await self.async_get_last_sensor_data()
         if old_value:
             self._attr_native_value = old_value.native_value
@@ -252,7 +250,7 @@ class F1RaceSensor(RestoreSensor):
         self._attr_state_class = None
 
     async def async_added_to_hass(self):
-        """Restore previous state"""
+        """Restore previous state."""
         old_value = await self.async_get_last_sensor_data()
         if old_value:
             self._attr_native_value = old_value.native_value
