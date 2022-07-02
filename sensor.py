@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from homeassistant.components.sensor import (
-    SensorEntity,
+    RestoreSensor,
 )
 
 from homeassistant.core import HomeAssistant
@@ -86,7 +86,7 @@ def setup_platform(
     add_entities(entities_to_add)
 
 
-class F1DriversSensor(SensorEntity):
+class F1DriversSensor(RestoreSensor):
     """Representation of a Sensor."""
 
     def __init__(self, f1_data_handler, driver_num) -> None:
@@ -103,6 +103,12 @@ class F1DriversSensor(SensorEntity):
         self._attr_native_unit_of_measurement = None
         self._attr_device_class = None
         self._attr_state_class = None
+
+    async def async_added_to_hass(self):
+        """Restore previous state"""
+        old_value = await self.async_get_last_sensor_data()
+        if old_value:
+            self._attr_native_value = old_value.native_value
 
     @property
     def extra_state_attributes(self):
@@ -124,7 +130,7 @@ class F1DriversSensor(SensorEntity):
         self._attr_native_value = driver_data["driver"]
 
 
-class F1ConstructorsSensor(SensorEntity):
+class F1ConstructorsSensor(RestoreSensor):
     """Representation of a Sensor."""
 
     def __init__(self, f1_data_handler, constructor_num) -> None:
@@ -144,6 +150,12 @@ class F1ConstructorsSensor(SensorEntity):
         self._attr_native_unit_of_measurement = None
         self._attr_device_class = None
         self._attr_state_class = None
+
+    async def async_added_to_hass(self):
+        """Restore previous state"""
+        old_value = await self.async_get_last_sensor_data()
+        if old_value:
+            self._attr_native_value = old_value.native_value
 
     @property
     def extra_state_attributes(self):
@@ -169,7 +181,7 @@ class F1ConstructorsSensor(SensorEntity):
         self._attr_native_value = constructor_data["constructor"]
 
 
-class F1NextRaceNameSensor(SensorEntity):
+class F1NextRaceNameSensor(RestoreSensor):
     """Representation of a Sensor."""
 
     def __init__(self, f1_data_handler) -> None:
@@ -180,6 +192,12 @@ class F1NextRaceNameSensor(SensorEntity):
         self._attr_device_class = None
         self._attr_state_class = None
 
+    async def async_added_to_hass(self):
+        """Restore previous state"""
+        old_value = await self.async_get_last_sensor_data()
+        if old_value:
+            self._attr_native_value = old_value.native_value
+
     def update(self) -> None:
         """Fetch new state data for the sensor."""
 
@@ -188,7 +206,7 @@ class F1NextRaceNameSensor(SensorEntity):
         self._attr_native_value = race_data["raceName"]
 
 
-class F1NextRaceDateSensor(SensorEntity):
+class F1NextRaceDateSensor(RestoreSensor):
     """Representation of a Sensor."""
 
     def __init__(self, f1_data_handler) -> None:
@@ -199,6 +217,12 @@ class F1NextRaceDateSensor(SensorEntity):
         self._attr_device_class = None
         self._attr_state_class = None
 
+    async def async_added_to_hass(self):
+        """Restore previous state"""
+        old_value = await self.async_get_last_sensor_data()
+        if old_value:
+            self._attr_native_value = old_value.native_value
+
     def update(self) -> None:
         """Fetch new state data for the sensor."""
         handler = self.f1_data_handler
@@ -206,7 +230,7 @@ class F1NextRaceDateSensor(SensorEntity):
         self._attr_native_value = race_data["date"] + "T" + race_data["time"]
 
 
-class F1RaceSensor(SensorEntity):
+class F1RaceSensor(RestoreSensor):
     """Representation of a Sensor."""
 
     def __init__(self, f1_data_handler, race_num) -> None:
@@ -226,6 +250,12 @@ class F1RaceSensor(SensorEntity):
         self._attr_native_unit_of_measurement = None
         self._attr_device_class = None
         self._attr_state_class = None
+
+    async def async_added_to_hass(self):
+        """Restore previous state"""
+        old_value = await self.async_get_last_sensor_data()
+        if old_value:
+            self._attr_native_value = old_value.native_value
 
     @property
     def extra_state_attributes(self):
