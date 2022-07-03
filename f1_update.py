@@ -1,6 +1,5 @@
 """Handles the data layer for formula_one integration."""
 import datetime
-import json
 import logging
 import requests
 import time
@@ -13,9 +12,6 @@ from .const import (
     URL_DRIVERS,
     URL_CONSTRUCTORS,
     URL_SEASON,
-    ERR_JSON_DRIVERS,
-    ERR_JSON_CONSTRUCTORS,
-    ERR_JSON_SEASON,
 )
 
 _LOGGER = logging.getLogger(DOMAIN)
@@ -42,24 +38,27 @@ class F1DataHandler:
         _LOGGER.info("Fetching an update of %s", update_type)
 
         url = ""
-        err_json = ""
         if update_type == KEY_DRIVERS:
             url = URL_DRIVERS
-            err_json = ERR_JSON_DRIVERS
         elif update_type == KEY_CONSTRUCTORS:
             url = URL_CONSTRUCTORS
-            err_json = ERR_JSON_CONSTRUCTORS
         else:
             url = URL_SEASON
-            err_json = ERR_JSON_SEASON
 
-        try:
-            req = requests.get(url)
-            self.hass.data[DOMAIN].data[update_type] = req.json()
+        success = False
+        while success is False:
+            try:
+                req = requests.get(url)
+                self.hass.data[DOMAIN].data[update_type] = req.json()
+                success = True
 
-        except requests.exceptions.JSONDecodeError as err:
-            _LOGGER.error("Failed to decode JSON from source: %s", err.strerror)
-            self.hass.data[DOMAIN].data[update_type] = json.loads(err_json)
+            except requests.exceptions.JSONDecodeError as err:
+                _LOGGER.error(
+                    "Failed to decode JSON from source: %s. Trying again in 5 seconds",
+                    err.strerror,
+                )
+                success = False
+                time.sleep(5)
 
     def download_update_regularly(self, update_type, freq):
         """Launches an async task that downloads an update from the hosted data regularly."""
