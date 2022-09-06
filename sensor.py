@@ -119,6 +119,7 @@ class F1DriversSensor(RestoreSensor):
         ret["team"] = driver_data["team"]
         ret["driverId"] = driver_data["driverId"]
         ret["season"] = driver_data["season"]
+        ret["round"] = driver_data["round"]
         ret["place"] = driver_data["place"]
         return ret
 
@@ -167,6 +168,7 @@ class F1ConstructorsSensor(RestoreSensor):
         ret["nationality"] = constructor_data["nationality"]
         ret["constructorId"] = constructor_data["constructorId"]
         ret["season"] = constructor_data["season"]
+        ret["round"] = constructor_data["round"]
         ret["place"] = constructor_data["place"]
         return ret
 
