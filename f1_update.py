@@ -93,6 +93,7 @@ class F1DataHandler:
         ret["team"] = driver_data["Constructors"][0]["name"]
         ret["driverId"] = driver_data["Driver"]["driverId"]
         ret["season"] = update["StandingsTable"]["season"]
+        ret["round"] = update["StandingsTable"]["StandingsLists"][0]["round"]
         ret["place"] = place
 
         return ret
@@ -114,6 +115,7 @@ class F1DataHandler:
         ret["nationality"] = constructor_data["Constructor"]["nationality"]
         ret["constructorId"] = constructor_data["Constructor"]["constructorId"]
         ret["season"] = update["StandingsTable"]["season"]
+        ret["round"] = update["StandingsTable"]["StandingsLists"][0]["round"]
         ret["place"] = place
 
         return ret
